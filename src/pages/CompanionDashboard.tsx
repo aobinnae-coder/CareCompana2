@@ -26,7 +26,20 @@ export default function CompanionDashboard() {
   };
   const [bio, setBio] = useState('');
   const [skillsList, setSkillsList] = useState<string[]>([]);
+  const [languagesList, setLanguagesList] = useState<string[]>(['English']);
+  const [certificationsList, setCertificationsList] = useState<string[]>(['CPR Certified']);
+  const [avatarUrl, setAvatarUrl] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Companion');
   const [newSkill, setNewSkill] = useState('');
+  const [newLanguage, setNewLanguage] = useState('');
+  const [newCertification, setNewCertification] = useState('');
+  const [isAvailable, setIsAvailable] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showNotification, setShowNotification] = useState(false);
+  const [nearbyJobs] = useState([
+    { id: 'JOB-001', name: 'Eleanor R.', date: 'Tomorrow, 10:00 AM', priority: false },
+    { id: 'JOB-002', name: 'Arthur D.', date: 'Today, 4:00 PM', priority: true },
+    { id: 'JOB-003', name: 'Martha S.', date: 'Friday, 1:00 PM', priority: false }
+  ]);
 
   useEffect(() => {
     fetch('/api/companions/CMP-001')
@@ -61,7 +74,11 @@ export default function CompanionDashboard() {
       window.history.replaceState({}, '', '/companion');
     }
 
-  }, []);
+    if (isAvailable && nearbyJobs.some(j => j.priority)) {
+       const timer = setTimeout(() => setShowNotification(true), 3000);
+       return () => clearTimeout(timer);
+    }
+  }, [isAvailable, nearbyJobs]);
 
   const updateStatus = async (status: string) => {
     if (!visit) return;
@@ -86,14 +103,24 @@ export default function CompanionDashboard() {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-slate-900 border-x border-slate-800 min-h-screen pb-20 overflow-hidden relative shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+    <div className="max-w-md mx-auto bg-slate-900 border-x border-slate-800 min-h-screen pb-20 relative shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+      {showNotification && (
+         <div className="absolute top-4 left-4 right-4 bg-emerald-600 text-white p-4 rounded-2xl shadow-2xl z-50 animate-bounce flex justify-between items-center">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider mb-1">New High-Priority Request!</p>
+              <p className="text-sm">Arthur D. is looking for a companion today at 4:00 PM.</p>
+            </div>
+            <button onClick={() => setShowNotification(false)} className="text-emerald-200 hover:text-white">&times;</button>
+         </div>
+      )}
+
       {/* Mobile App Simulator Header */}
       <div className="bg-blue-600 text-white pt-12 pb-6 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-blue-500/20 to-transparent"></div>
         <div className="relative z-10">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
-               <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=Companion`} alt="Profile" className="w-12 h-12 rounded-full bg-slate-800 border-2 border-white/20" />
+               <img src={avatarUrl} alt="Profile" className="w-12 h-12 rounded-full bg-slate-800 border-2 border-white/20 object-cover" />
                <div>
                  <h2 className="font-bold text-lg leading-tight">Maria S.</h2>
                  <div className="flex items-center gap-1 text-blue-100 text-xs font-bold uppercase tracking-wider">
@@ -104,6 +131,15 @@ export default function CompanionDashboard() {
             <div className="bg-white/10 p-2 rounded-full backdrop-blur-sm border border-white/10">
               <ShieldCheck className="w-5 h-5 text-emerald-400" />
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-blue-200">Status:</span>
+            <button 
+              onClick={() => setIsAvailable(!isAvailable)}
+              className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full transition-colors ${isAvailable ? 'bg-emerald-500 text-white' : 'bg-slate-500 text-white'}`}
+            >
+              {isAvailable ? 'Available for Jobs' : 'Not Available'}
+            </button>
           </div>
         </div>
       </div>
@@ -120,8 +156,66 @@ export default function CompanionDashboard() {
           {editMode ? (
             <div className="space-y-3">
               <div>
+                <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Profile Avatar URL</label>
+                <input type="text" value={avatarUrl} onChange={e => setAvatarUrl(e.target.value)} className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-lg p-2 text-white text-xs" />
+              </div>
+              <div>
                 <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Bio</label>
                 <textarea value={bio} onChange={e => setBio(e.target.value)} className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-lg p-2 text-white text-xs h-20"></textarea>
+              </div>
+              <div>
+                <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Languages Spoken</label>
+                <div className="flex flex-wrap gap-2 mt-1 mb-2">
+                  {languagesList.map((lang, idx) => (
+                    <span key={idx} className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                      {lang}
+                      <button onClick={() => setLanguagesList(languagesList.filter((_, i) => i !== idx))} className="hover:text-red-400 ml-1">&times;</button>
+                    </span>
+                  ))}
+                </div>
+                <input 
+                  type="text" 
+                  value={newLanguage} 
+                  onChange={e => setNewLanguage(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && newLanguage.trim()) {
+                      e.preventDefault();
+                      if (!languagesList.includes(newLanguage.trim())) {
+                        setLanguagesList([...languagesList, newLanguage.trim()]);
+                      }
+                      setNewLanguage('');
+                    }
+                  }}
+                  placeholder="Type a language and press Enter"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white text-xs" 
+                />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Certifications</label>
+                <div className="flex flex-wrap gap-2 mt-1 mb-2">
+                  {certificationsList.map((cert, idx) => (
+                    <span key={idx} className="bg-purple-600/20 text-purple-400 border border-purple-500/30 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                      {cert}
+                      <button onClick={() => setCertificationsList(certificationsList.filter((_, i) => i !== idx))} className="hover:text-red-400 ml-1">&times;</button>
+                    </span>
+                  ))}
+                </div>
+                <input 
+                  type="text" 
+                  value={newCertification} 
+                  onChange={e => setNewCertification(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && newCertification.trim()) {
+                      e.preventDefault();
+                      if (!certificationsList.includes(newCertification.trim())) {
+                        setCertificationsList([...certificationsList, newCertification.trim()]);
+                      }
+                      setNewCertification('');
+                    }
+                  }}
+                  placeholder="Type a certification and press Enter"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white text-xs" 
+                />
               </div>
               <div>
                 <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Skills</label>
@@ -154,6 +248,30 @@ export default function CompanionDashboard() {
           ) : (
             <div className="space-y-3">
               <p className="text-xs text-slate-300 leading-relaxed"><span className="text-slate-500 font-bold uppercase text-[10px] block mb-1">Bio</span>{bio}</p>
+              
+              <div className="flex gap-4 flex-wrap">
+                <div>
+                  <span className="text-slate-500 font-bold uppercase text-[10px] block mb-1">Languages</span>
+                  <div className="flex flex-wrap gap-2">
+                    {languagesList.map((lang, idx) => (
+                      <span key={idx} className="text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                        {lang}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-slate-500 font-bold uppercase text-[10px] block mb-1">Certifications</span>
+                  <div className="flex flex-wrap gap-2">
+                    {certificationsList.map((cert, idx) => (
+                      <span key={idx} className="text-purple-400 bg-purple-500/10 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                        {cert}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <span className="text-slate-500 font-bold uppercase text-[10px] block mb-1">Skills</span>
                 <div className="flex flex-wrap gap-2">
@@ -279,19 +397,41 @@ export default function CompanionDashboard() {
           </div>
         ) : (
           <div>
-             <h3 className="font-bold text-white text-sm uppercase tracking-wider mb-4">Nearby Requests</h3>
-             {/* Fallback mock job */}
-             <div className="bg-slate-950 rounded-[2rem] p-5 shadow-sm border border-slate-800 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h4 className="font-bold text-white text-base">Companionship <span className="text-slate-400 font-normal">with</span> Eleanor R.</h4>
-                    <p className="text-xs text-blue-400 font-bold uppercase tracking-wider mt-1">Tomorrow, 10:00 AM</p>
-                  </div>
-                </div>
-                <button className="w-full bg-slate-800 text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest border border-slate-700">
-                  Accept Visit
-                </button>
+             <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-white text-sm uppercase tracking-wider">Nearby Requests</h3>
+             </div>
+             
+             <div className="mb-4">
+               <input 
+                 type="text" 
+                 placeholder="Search by client name..." 
+                 value={searchQuery}
+                 onChange={e => setSearchQuery(e.target.value)}
+                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-white text-xs outline-none focus:border-emerald-500"
+               />
+             </div>
+
+             <div className="space-y-3">
+               {nearbyJobs.filter(j => j.name.toLowerCase().includes(searchQuery.toLowerCase())).map(job => (
+                 <div key={job.id} className="bg-slate-950 rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden">
+                    <div className={`absolute top-0 left-0 w-1 h-full ${job.priority ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="font-bold text-white text-sm">Companionship <span className="text-slate-400 font-normal">with</span> {job.name}</h4>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${job.priority ? 'text-amber-400' : 'text-blue-400'}`}>
+                          {job.date}
+                        </p>
+                      </div>
+                      {job.priority && <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest">High Priority</span>}
+                    </div>
+                    <button className="w-full bg-slate-800 hover:bg-slate-700 transition-colors text-white font-bold py-2.5 rounded-lg text-xs uppercase tracking-widest border border-slate-700">
+                      Accept Visit
+                    </button>
+                 </div>
+               ))}
+               {nearbyJobs.filter(j => j.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                 <p className="text-xs text-slate-500 text-center py-4">No jobs match your search.</p>
+               )}
              </div>
           </div>
         )}
