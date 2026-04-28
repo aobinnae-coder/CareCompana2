@@ -74,6 +74,7 @@ async function startServer() {
         summary: '',
         rating: null as number | null,
         scheduledFor: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // Tomorrow
+        cancelReason: undefined as string | undefined,
       },
       {
         id: 'VST-8842',
@@ -85,6 +86,7 @@ async function startServer() {
         summary: 'David visited Arthur. The visit was brief and lacked engagement.',
         rating: 3,
         scheduledFor: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+        cancelReason: undefined as string | undefined,
       }
     ],
     seniors: [
@@ -199,6 +201,7 @@ async function startServer() {
 
   app.post('/api/visits/:id/cancel', (req, res) => {
     const { id } = req.params;
+    const { reason } = req.body || {};
     const visit = state.visits.find(v => v.id === id);
     if (!visit) return res.status(404).json({ error: 'Visit not found' });
     
@@ -208,6 +211,7 @@ async function startServer() {
     const isLateCancellation = (scheduled.getTime() - now.getTime()) < 24 * 60 * 60 * 1000;
     
     visit.status = 'cancelled';
+    visit.cancelReason = reason || 'Unknown';
     
     const comp = state.companions.find(c => c.id === visit.companionId);
     if (comp && isLateCancellation) {

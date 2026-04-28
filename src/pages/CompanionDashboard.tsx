@@ -36,10 +36,14 @@ export default function CompanionDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotification, setShowNotification] = useState(false);
   const [nearbyJobs] = useState([
-    { id: 'JOB-001', name: 'Eleanor R.', date: 'Tomorrow, 10:00 AM', priority: false },
-    { id: 'JOB-002', name: 'Arthur D.', date: 'Today, 4:00 PM', priority: true },
-    { id: 'JOB-003', name: 'Martha S.', date: 'Friday, 1:00 PM', priority: false }
+    { id: 'JOB-001', name: 'Eleanor R.', date: 'Tomorrow, 10:00 AM', priority: false, location: '2.5 miles away', payout: '$35.00', reqSkills: ['Dementia Care'] },
+    { id: 'JOB-002', name: 'Arthur D.', date: 'Today, 4:00 PM', priority: true, location: '1.1 miles away', payout: '$45.00', reqSkills: ['Physical Therapy Assist'] },
+    { id: 'JOB-003', name: 'Martha S.', date: 'Friday, 1:00 PM', priority: false, location: '3.8 miles away', payout: '$30.00', reqSkills: ['Medication Reminders'] },
+    { id: 'JOB-004', name: 'John K.', date: 'Monday, 9:00 AM', priority: false, location: '1.5 miles away', payout: '$40.00', reqSkills: ['Alzheimer\'s Care'] }
   ]);
+  const [filterSkill, setFilterSkill] = useState('');
+  const [bgStatus] = useState('pending');
+  const [idStatus] = useState('verified');
 
   useEffect(() => {
     fetch('/api/companions/CMP-001')
@@ -132,19 +136,53 @@ export default function CompanionDashboard() {
               <ShieldCheck className="w-5 h-5 text-emerald-400" />
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-blue-200">Status:</span>
-            <button 
-              onClick={() => setIsAvailable(!isAvailable)}
-              className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full transition-colors ${isAvailable ? 'bg-emerald-500 text-white' : 'bg-slate-500 text-white'}`}
-            >
-              {isAvailable ? 'Available for Jobs' : 'Not Available'}
-            </button>
+          <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-blue-200">Current Status</span>
+            <label className="flex items-center cursor-pointer">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only" 
+                  checked={isAvailable} 
+                  onChange={() => setIsAvailable(!isAvailable)} 
+                />
+                <div className={`block w-14 h-8 rounded-full transition-colors ${isAvailable ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
+                <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${isAvailable ? 'transform translate-x-6' : ''}`}></div>
+              </div>
+              <div className="ml-3 text-xs font-bold uppercase tracking-wider text-white w-16">
+                {isAvailable ? 'Available' : 'Hidden'}
+              </div>
+            </label>
           </div>
         </div>
       </div>
 
       <div className="p-6 space-y-6">
+        {/* Verification Status */}
+        <div className="bg-slate-950 rounded-3xl p-5 border border-slate-800 relative">
+          <h3 className="font-bold text-white text-sm uppercase tracking-wider mb-4">Verification Status</h3>
+          <div className="space-y-3">
+             <div className="flex justify-between items-center p-3 rounded-xl bg-slate-900 border border-slate-800">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">ID Verification</span>
+                  <span className="text-[10px] text-slate-500 font-medium">Government ID matches profile</span>
+                </div>
+                <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded ${idStatus === 'verified' ? 'bg-emerald-500/20 text-emerald-400' : idStatus === 'pending' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}`}>
+                   {idStatus}
+                </span>
+             </div>
+             <div className="flex justify-between items-center p-3 rounded-xl bg-slate-900 border border-slate-800">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Background Check</span>
+                  <span className="text-[10px] text-slate-500 font-medium">SSN tracing and criminal check</span>
+                </div>
+                <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded ${bgStatus === 'clear' ? 'bg-emerald-500/20 text-emerald-400' : bgStatus === 'pending' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}`}>
+                   {bgStatus}
+                </span>
+             </div>
+          </div>
+        </div>
+
         {/* Profile Details Block */}
         <div className="bg-slate-950 rounded-3xl p-5 border border-slate-800 relative">
           <div className="flex justify-between items-center mb-4">
@@ -227,6 +265,24 @@ export default function CompanionDashboard() {
                     </span>
                   ))}
                 </div>
+                
+                <div className="mb-3">
+                  <span className="text-[9px] uppercase font-bold text-slate-600 tracking-wider mb-1 block">Suggested Care Skills</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['Dementia Care', 'Alzheimer\'s Care', 'Stroke Recovery', 'Physical Therapy Assist', 'Medication Reminders'].map(skill => (
+                      <button 
+                        key={skill}
+                        onClick={() => {
+                          if (!skillsList.includes(skill)) setSkillsList([...skillsList, skill]);
+                        }}
+                        className="text-[9px] bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded font-bold uppercase tracking-wider hover:bg-slate-700"
+                      >
+                        + {skill}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <input 
                   type="text" 
                   value={newSkill} 
@@ -240,7 +296,7 @@ export default function CompanionDashboard() {
                       setNewSkill('');
                     }
                   }}
-                  placeholder="Type a skill and press Enter"
+                  placeholder="Type a custom skill and press Enter"
                   className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white text-xs" 
                 />
               </div>
@@ -401,7 +457,7 @@ export default function CompanionDashboard() {
                 <h3 className="font-bold text-white text-sm uppercase tracking-wider">Nearby Requests</h3>
              </div>
              
-             <div className="mb-4">
+             <div className="flex flex-col gap-2 mb-4">
                <input 
                  type="text" 
                  placeholder="Search by client name..." 
@@ -409,28 +465,54 @@ export default function CompanionDashboard() {
                  onChange={e => setSearchQuery(e.target.value)}
                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-white text-xs outline-none focus:border-emerald-500"
                />
+               <select 
+                 value={filterSkill}
+                 onChange={e => setFilterSkill(e.target.value)}
+                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-white text-xs outline-none focus:border-emerald-500 appearance-none"
+               >
+                  <option value="">All Care Needs</option>
+                  <option value="Dementia Care">Dementia Care</option>
+                  <option value="Alzheimer's Care">Alzheimer's Care</option>
+                  <option value="Stroke Recovery">Stroke Recovery</option>
+                  <option value="Physical Therapy Assist">Physical Therapy Assistance</option>
+                  <option value="Medication Reminders">Medication Reminders</option>
+               </select>
              </div>
 
              <div className="space-y-3">
-               {nearbyJobs.filter(j => j.name.toLowerCase().includes(searchQuery.toLowerCase())).map(job => (
+               {nearbyJobs.filter(j => j.name.toLowerCase().includes(searchQuery.toLowerCase()) && (filterSkill === '' || j.reqSkills.includes(filterSkill))).map(job => (
                  <div key={job.id} className="bg-slate-950 rounded-2xl p-4 shadow-sm border border-slate-800 relative overflow-hidden">
                     <div className={`absolute top-0 left-0 w-1 h-full ${job.priority ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>
-                    <div className="flex justify-between items-start mb-3">
+                    
+                    <div className="flex justify-between items-start mb-2">
                       <div>
                         <h4 className="font-bold text-white text-sm">Companionship <span className="text-slate-400 font-normal">with</span> {job.name}</h4>
                         <p className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${job.priority ? 'text-amber-400' : 'text-blue-400'}`}>
                           {job.date}
                         </p>
                       </div>
-                      {job.priority && <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest">High Priority</span>}
+                      <div className="text-right">
+                        <span className="font-bold text-emerald-400 text-sm block">{job.payout}</span>
+                        {job.priority && <span className="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest mt-1 inline-block">High Priority</span>}
+                      </div>
                     </div>
+                    
+                    <div className="flex justify-between items-center mb-3 text-[10px] text-slate-400 font-medium">
+                       <span className="flex items-center gap-1"><MapPin className="w-3 h-3"/> {job.location}</span>
+                       <div className="flex gap-1">
+                          {job.reqSkills.map(skill => (
+                            <span key={skill} className="bg-slate-800 px-1.5 py-0.5 rounded text-[8px] uppercase tracking-wider">{skill}</span>
+                          ))}
+                       </div>
+                    </div>
+
                     <button className="w-full bg-slate-800 hover:bg-slate-700 transition-colors text-white font-bold py-2.5 rounded-lg text-xs uppercase tracking-widest border border-slate-700">
                       Accept Visit
                     </button>
                  </div>
                ))}
-               {nearbyJobs.filter(j => j.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
-                 <p className="text-xs text-slate-500 text-center py-4">No jobs match your search.</p>
+               {nearbyJobs.filter(j => j.name.toLowerCase().includes(searchQuery.toLowerCase()) && (filterSkill === '' || j.reqSkills.includes(filterSkill))).length === 0 && (
+                 <p className="text-xs text-slate-500 text-center py-4">No jobs match your criteria.</p>
                )}
              </div>
           </div>

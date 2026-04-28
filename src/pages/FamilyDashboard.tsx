@@ -10,6 +10,8 @@ export default function FamilyDashboard() {
   const [bookingSpecialized, setBookingSpecialized] = useState(false);
   const [subscriptionTier, setSubscriptionTier] = useState<'basic' | 'care-plus' | 'family-pro'>('basic');
   const [isYearly, setIsYearly] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('Changed mind');
 
   const fetchVisits = () => {
     fetch('/api/visits')
@@ -41,10 +43,20 @@ export default function FamilyDashboard() {
     return () => clearInterval(int);
   }, []);
 
-  const handleCancel = async () => {
-    if (!visit || !confirm("Are you sure you want to cancel? Cancellations under 24h may incur a penalty.")) return;
-    const res = await fetch(`/api/visits/${visit.id}/cancel`, { method: 'POST' });
+  const handleCancelClick = () => {
+    if (!visit) return;
+    setShowCancelModal(true);
+  };
+
+  const confirmCancel = async () => {
+    if (!visit) return;
+    const res = await fetch(`/api/visits/${visit.id}/cancel`, { 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: cancelReason })
+    });
     const data = await res.json();
+    setShowCancelModal(false);
     if (data.penaltyApplied) alert("Late cancellation penalty applied (24h policy).");
     fetchVisits();
   };
@@ -133,18 +145,54 @@ export default function FamilyDashboard() {
                    <span>x {bookingHours}</span>
                  </div>
                  <div className="flex justify-between text-slate-500 border-b border-slate-800 pb-2">
-                   <span>Trust & Support Fee (5%)</span>
-                   <span>${(bookingHours * (bookingSpecialized ? 45 : 35) * 0.05).toFixed(2)}</span>
+                   <span>Trust & Support Fee (10%)</span>
+                   <span>${(bookingHours * (bookingSpecialized ? 45 : 35) * 0.10).toFixed(2)}</span>
                  </div>
                  <div className="flex justify-between font-bold text-white pt-2">
                    <span>Total</span>
-                   <span>${(bookingHours * (bookingSpecialized ? 45 : 35) * 1.05).toFixed(2)}</span>
+                   <span>${(bookingHours * (bookingSpecialized ? 45 : 35) * 1.10).toFixed(2)}</span>
                  </div>
               </div>
 
               <button onClick={handleBookVisit} className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2">
                 <CreditCard className="w-4 h-4" /> Check out with Stripe
               </button>
+           </div>
+         </div>
+       )}
+
+       {/* Cancel Modal */}
+       {showCancelModal && (
+         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+           <div className="bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl relative">
+             <button onClick={() => setShowCancelModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
+             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+             <h2 className="text-xl font-bold text-white mb-2">Cancel Visit?</h2>
+             <p className="text-slate-400 text-sm mb-6">Cancellations under 24 hours may incur a penalty.</p>
+             
+             <div className="text-left mb-6">
+               <label className="block text-[10px] uppercase font-bold text-slate-500 mb-2 tracking-wider">Reason for Cancellation</label>
+               <select 
+                 value={cancelReason} 
+                 onChange={e => setCancelReason(e.target.value)}
+                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:border-red-500 outline-none"
+               >
+                 <option value="Changed mind">Changed mind</option>
+                 <option value="No longer needed">No longer needed / Schedule changed</option>
+                 <option value="Found alternative care">Found alternative care</option>
+                 <option value="Senior is unwell/hospitalized">Senior is unwell/hospitalized</option>
+                 <option value="Other">Other</option>
+               </select>
+             </div>
+
+             <div className="flex gap-4">
+               <button onClick={() => setShowCancelModal(false)} className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl uppercase tracking-widest text-xs transition-colors">
+                 Keep Visit
+               </button>
+               <button onClick={confirmCancel} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl uppercase tracking-widest text-xs transition-colors">
+                 Confirm Cancel
+               </button>
+             </div>
            </div>
          </div>
        )}
@@ -213,7 +261,7 @@ export default function FamilyDashboard() {
                     </p>
                     
                     {visit.status === 'pending' && (
-                      <button onClick={handleCancel} className="mt-4 px-4 py-2 bg-red-600/10 text-red-500 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-red-500/20 hover:bg-red-600/20 transition-colors">
+                      <button onClick={handleCancelClick} className="mt-4 px-4 py-2 bg-red-600/10 text-red-500 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-red-500/20 hover:bg-red-600/20 transition-colors">
                         Cancel Visit
                       </button>
                     )}

@@ -37,6 +37,8 @@ export default function AdminDashboard() {
   const [seniorConditionFilter, setSeniorConditionFilter] = useState('');
   const [seniorLastVisitFilter, setSeniorLastVisitFilter] = useState('');
 
+  const [seniorFamilyAdminFilter, setSeniorFamilyAdminFilter] = useState('');
+
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSeniorSearchQuery(seniorSearchQuery), 300);
     return () => clearTimeout(handler);
@@ -119,8 +121,11 @@ export default function AdminDashboard() {
   });
 
   const filteredVisits = visits.filter(v => {
-    const matchesSearch = (v.companionName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          v.seniorName.toLowerCase().includes(searchQuery.toLowerCase()));
+    const term = searchQuery.toLowerCase();
+    const matchesSearch = (v.companionName.toLowerCase().includes(term) || 
+                          v.seniorName.toLowerCase().includes(term) ||
+                          (v.companionId || '').toLowerCase().includes(term) ||
+                          (v.seniorId || '').toLowerCase().includes(term));
     const matchesStatus = statusFilter === '' || v.status === statusFilter;
     
     let matchesDate = true;
@@ -140,10 +145,10 @@ export default function AdminDashboard() {
   const filteredSeniors = seniors.filter(s => {
     const term = debouncedSeniorSearchQuery.toLowerCase();
     const matchesSearch = s.name.toLowerCase().includes(term) || 
-           s.address.toLowerCase().includes(term) || 
-           s.familyAdmin.toLowerCase().includes(term);
+           s.address.toLowerCase().includes(term);
            
     const matchesLanguage = seniorLanguageFilter === '' || s.primaryLanguage === seniorLanguageFilter;
+    const matchesFamilyAdmin = seniorFamilyAdminFilter === '' || s.familyAdmin === seniorFamilyAdminFilter;
     
     // For conditions, we assume s.conditions is an array of strings. If the filter is "Dementia", we check if the person has "Dementia".
     let matchesCondition = true;
@@ -169,7 +174,7 @@ export default function AdminDashboard() {
       }
     }
 
-    return matchesSearch && matchesLanguage && matchesCondition && matchesLastVisit;
+    return matchesSearch && matchesLanguage && matchesCondition && matchesLastVisit && matchesFamilyAdmin;
   });
 
   return (
@@ -284,8 +289,34 @@ export default function AdminDashboard() {
                 <input required type="text" value={newSenior.address} onChange={e => setNewSenior({ ...newSenior, address: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-blue-500 outline-none" />
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Conditions / Notes (comma separated)</label>
-                <input type="text" value={newSenior.conditions} onChange={e => setNewSenior({ ...newSenior, conditions: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-blue-500 outline-none" placeholder="e.g. Mild Dementia, Hearing Loss" />
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Conditions</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {newSenior.conditions.split(',').filter(c => c.trim()).map((cond, idx) => (
+                    <span key={idx} className="bg-slate-800 text-slate-300 px-2 py-1 rounded text-[10px] uppercase tracking-wider font-bold flex items-center gap-1">
+                      {cond.trim()}
+                      <button type="button" onClick={() => setNewSenior({ ...newSenior, conditions: newSenior.conditions.split(',').filter(c => c.trim() !== cond.trim()).join(', ') })} className="text-slate-500 hover:text-white">&times;</button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2 mb-2">
+                   {['Dementia', 'Diabetes', 'Mobility Impaired', 'Hearing Loss'].map(c => (
+                     <button type="button" key={c} onClick={() => {
+                       const current = newSenior.conditions.split(',').map(s => s.trim()).filter(s => s);
+                       if (!current.includes(c)) setNewSenior({ ...newSenior, conditions: [...current, c].join(', ') });
+                     }} className="text-[10px] border border-slate-700 bg-slate-900 text-slate-400 px-2 py-1 rounded font-bold uppercase tracking-wider hover:bg-slate-800">+ {c}</button>
+                   ))}
+                </div>
+                <input type="text" onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const val = e.currentTarget.value.trim();
+                    if (val) {
+                      const current = newSenior.conditions.split(',').map(s => s.trim()).filter(s => s);
+                      if (!current.includes(val)) setNewSenior({ ...newSenior, conditions: [...current, val].join(', ') });
+                      e.currentTarget.value = '';
+                    }
+                  }
+                }} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-blue-500 outline-none" placeholder="Type custom condition & press Enter" />
               </div>
               <div>
                 <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Family Admin Name</label>
@@ -416,11 +447,24 @@ export default function AdminDashboard() {
                   <UserSearch className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input 
                     type="text" 
-                    placeholder="Find by Name, Address, or Family Admin..." 
+                    placeholder="Find by Name or Address..." 
                     value={seniorSearchQuery}
                     onChange={e => setSeniorSearchQuery(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
                   />
+               </div>
+
+               <div className="w-full sm:w-auto">
+                  <select 
+                    value={seniorFamilyAdminFilter}
+                    onChange={e => setSeniorFamilyAdminFilter(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="">All Admins</option>
+                    {[...new Set(seniors.map(s => s.familyAdmin).filter(Boolean))].map(admin => (
+                      <option key={admin} value={admin as string}>{admin as string}</option>
+                    ))}
+                  </select>
                </div>
                
                <div className="w-full sm:w-auto">
