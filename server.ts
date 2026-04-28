@@ -552,8 +552,8 @@ Your task is to write a compassionate, brief, and professional visit summary for
       appType: "spa",
     });
     app.use(vite.middlewares);
-  } else {
-    // Production serving
+  } else if (!process.env.VERCEL) {
+    // Production serving locally
     const distPath = path.resolve(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
