@@ -49,7 +49,7 @@ export default function EmergencyReport() {
         seniorName: 'Eleanor R.',
         visitId: 'VST-8821'
       })
-    });
+    }).catch(err => console.log('Network err', err.message));
     setSubmitted(true);
   };
 

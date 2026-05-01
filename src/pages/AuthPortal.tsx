@@ -26,7 +26,7 @@ export default function AuthPortal() {
         <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(37,99,235,0.3)]">
           <div className="w-8 h-8 border-4 border-white rounded-full"></div>
         </div>
-        <h1 className="text-4xl font-light text-white mb-2">Welcome to CareCompana</h1>
+        <h1 className="text-4xl font-light text-white mb-2">Welcome to CompanaConnect</h1>
         <p className="text-slate-400 mb-12">Select your portal to continue</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
@@ -67,7 +67,7 @@ export default function AuthPortal() {
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-white mb-2">{view === 'login' ? 'Sign In' : 'Create Account'}</h2>
           <p className="text-sm text-slate-400">
-            {role === 'companion' ? 'CareCompana Companion Services' : 'CareCompana Family Access'}
+            {role === 'companion' ? 'CompanaConnect Companion Services' : 'CompanaConnect Family Access'}
           </p>
         </div>
 

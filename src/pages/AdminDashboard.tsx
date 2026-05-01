@@ -59,14 +59,14 @@ export default function AdminDashboard() {
 
   // New senior form state
   const [newSenior, setNewSenior] = useState({
-    name: '', dob: '', address: '', conditions: '', primaryLanguage: 'English', familyAdmin: ''
+    name: '', dob: '', address: '', conditions: '', specializedCare: [] as string[], primaryLanguage: 'English', familyAdmin: ''
   });
 
   const fetchData = () => {
-    fetch('/api/incidents').then(res => res.json()).then(setIncidents);
-    fetch('/api/admin/companions-metrics').then(res => res.json()).then(setMetrics);
-    fetch('/api/visits').then(res => res.json()).then(setVisits);
-    fetch('/api/seniors').then(res => res.json()).then(setSeniors);
+    fetch('/api/incidents').then(res => res.json()).then(setIncidents).catch(err => console.log('Network err', err.message));
+    fetch('/api/admin/companions-metrics').then(res => res.json()).then(setMetrics).catch(err => console.log('Network err', err.message));
+    fetch('/api/visits').then(res => res.json()).then(setVisits).catch(err => console.log('Network err', err.message));
+    fetch('/api/seniors').then(res => res.json()).then(setSeniors).catch(err => console.log('Network err', err.message));
   };
 
   useEffect(() => {
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
         ...newSenior,
         conditions: newSenior.conditions.split(',').map(s => s.trim())
       })
-    });
+    }).catch(err => console.log(err.message));
     setShowAddSeniorModal(false);
     fetchData();
   };
@@ -107,7 +107,8 @@ export default function AdminDashboard() {
   };
 
   const viewSeniorHistory = async (id: string) => {
-    const res = await fetch(`/api/seniors/${id}/visits`);
+    const res = await fetch(`/api/seniors/${id}/visits`).catch(err => { console.log(err.message); return null; });
+    if (!res) return;
     const data = await res.json();
     setSeniorHistoryData(data);
     setHistorySeniorId(id);
@@ -160,15 +161,17 @@ export default function AdminDashboard() {
       }
     }
     
-    // For last visit date, since senior object might not have lastVisitDate, we can proxy it by checking if they have a visit past that date in `visits` state
+    // For last visit date: finding seniors whose LATEST visit is BEFORE the filter date
     let matchesLastVisit = true;
     if (seniorLastVisitFilter) {
       const seniorVisits = visits.filter(v => v.seniorName.toLowerCase() === s.name.toLowerCase() || v.seniorName.includes(s.name.split(' ')[0]));
       if (seniorVisits.length === 0) {
-        matchesLastVisit = false;
+        // If they have NO visits, they definitely haven't had one recently
+        matchesLastVisit = true;
       } else {
         const latestVisit = seniorVisits.sort((a,b) => new Date(b.scheduledFor).getTime() - new Date(a.scheduledFor).getTime())[0];
-        if (new Date(latestVisit.scheduledFor) < new Date(seniorLastVisitFilter)) {
+        // If their latest visit was BEFORE the threshold date, they are "neglected"
+        if (new Date(latestVisit.scheduledFor) > new Date(seniorLastVisitFilter)) {
           matchesLastVisit = false;
         }
       }
@@ -319,6 +322,28 @@ export default function AdminDashboard() {
                 }} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-blue-500 outline-none" placeholder="Type custom condition & press Enter" />
               </div>
               <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Specialized Care Needs</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                   {['Dementia Care', 'Physical Therapy Assistance', 'Palliative Care', 'Post-Op Recovery', 'Mobility Training'].map(type => (
+                     <button 
+                       type="button" 
+                       key={type} 
+                       onClick={() => {
+                         const current = newSenior.specializedCare;
+                         if (current.includes(type)) {
+                           setNewSenior({ ...newSenior, specializedCare: current.filter(t => t !== type) });
+                         } else {
+                           setNewSenior({ ...newSenior, specializedCare: [...current, type] });
+                         }
+                       }} 
+                       className={`text-[10px] border px-2 py-1 rounded font-bold uppercase tracking-wider transition ${newSenior.specializedCare.includes(type) ? 'bg-blue-600 border-blue-500 text-white' : 'border-slate-700 bg-slate-900 text-slate-400 hover:bg-slate-800'}`}
+                     >
+                       {type}
+                     </button>
+                   ))}
+                </div>
+              </div>
+              <div>
                 <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Family Admin Name</label>
                 <input required type="text" value={newSenior.familyAdmin} onChange={e => setNewSenior({ ...newSenior, familyAdmin: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:border-blue-500 outline-none" />
               </div>
@@ -399,7 +424,7 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="text-sm text-slate-300">
                   {metrics.map(comp => (
-                    <tr key={comp.id} className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
+                    <tr key={comp.id} className={`border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors ${comp.riskScore < riskThreshold ? 'bg-red-500/5 border-l-2 border-l-red-500' : ''}`}>
                       <td className="py-4 px-2 font-medium text-white">{comp.name} <span className="text-[10px] text-slate-500 ml-1 font-mono">{comp.id}</span></td>
                       <td className="py-4 px-2">
                         <span className={`font-mono font-bold ${comp.riskScore < 40 ? 'text-red-500' : comp.riskScore < 70 ? 'text-orange-500' : 'text-emerald-500'}`}>
@@ -495,15 +520,15 @@ export default function AdminDashboard() {
                   </select>
                </div>
 
-               <div className="w-full sm:w-auto flex items-center gap-2">
-                  <span className="text-xs text-slate-400">Since:</span>
-                  <input 
-                    type="date"
-                    value={seniorLastVisitFilter}
-                    onChange={e => setSeniorLastVisitFilter(e.target.value)}
-                     className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
-                  />
-               </div>
+                <div className="w-full sm:w-auto flex items-center gap-2">
+                   <span className="text-xs text-slate-400">No Visit Since:</span>
+                   <input 
+                     type="date"
+                     value={seniorLastVisitFilter}
+                     onChange={e => setSeniorLastVisitFilter(e.target.value)}
+                      className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                   />
+                </div>
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

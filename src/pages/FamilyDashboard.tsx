@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, User, Clock, Heart, AlertCircle, ArrowRight, Star, MapPin, CreditCard, Check, X } from 'lucide-react';
+import { Calendar, User, Clock, Heart, AlertCircle, ArrowRight, Star, MapPin, CreditCard, Check, X, MessageSquare, Bell, FileText, Upload, Brain, ShieldCheck } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function FamilyDashboard() {
@@ -12,6 +12,20 @@ export default function FamilyDashboard() {
   const [isYearly, setIsYearly] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('Changed mind');
+  const [showChat, setShowChat] = useState(false);
+  const [chatType, setChatType] = useState<'companion' | 'support'>('companion');
+  const [companionMessages, setCompanionMessages] = useState([
+    { id: 1, sender: 'companion', text: 'Hi! I am en route and should be there in 15 mins.', time: '09:45 AM' },
+    { id: 2, sender: 'family', text: 'Great, thanks for letting me know. The door is unlocked.', time: '09:47 AM' }
+  ]);
+  const [supportMessages, setSupportMessages] = useState([
+    { id: 1, sender: 'support', text: 'Hi there! How can CompanaConnect support you today?', time: '08:00 AM' }
+  ]);
+  const [newMessage, setNewMessage] = useState('');
+  const [uploadedFiles] = useState([
+    { name: 'Daily Care Plan.pdf', size: '2.4 MB', date: 'Oct 12' },
+    { name: 'Medical Directives.pdf', size: '1.1 MB', date: 'Oct 10' }
+  ]);
 
   const fetchVisits = () => {
     fetch('/api/visits')
@@ -19,7 +33,8 @@ export default function FamilyDashboard() {
       .then(data => {
         const active = data.find((v: any) => v.id === 'VST-8821');
         if (active) setVisit(active);
-      });
+      })
+      .catch(err => console.log('Network error fetching visits:', err.message));
   };
 
   useEffect(() => {
@@ -54,7 +69,8 @@ export default function FamilyDashboard() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reason: cancelReason })
-    });
+    }).catch(err => { console.log(err.message); return null; });
+    if (!res) return;
     const data = await res.json();
     setShowCancelModal(false);
     if (data.penaltyApplied) alert("Late cancellation penalty applied (24h policy).");
@@ -67,7 +83,7 @@ export default function FamilyDashboard() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rating: r })
-    });
+    }).catch(err => console.log(err.message));
     fetchVisits();
   };
 
@@ -76,7 +92,8 @@ export default function FamilyDashboard() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ hours: bookingHours, specialized: bookingSpecialized })
-    });
+    }).catch(err => { console.log(err.message); return null; });
+    if (!res) return;
     const data = await res.json();
     if (data.url) {
       window.location.href = data.url;
@@ -88,7 +105,8 @@ export default function FamilyDashboard() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tier, yearly })
-    });
+    }).catch(err => { console.log(err.message); return null; });
+    if (!res) return;
     const data = await res.json();
     if (data.url) {
       window.location.href = data.url;
@@ -102,7 +120,8 @@ export default function FamilyDashboard() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId })
-    });
+    }).catch(err => { console.log(err.message); return null; });
+    if (!res) return;
     const data = await res.json();
     if (data.url) {
       window.location.href = data.url;
@@ -118,6 +137,14 @@ export default function FamilyDashboard() {
               <button onClick={() => setShowBookingModal(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
               <h2 className="text-xl font-bold text-white mb-2">Book New Visit</h2>
               <p className="text-slate-400 text-sm mb-6">Select duration and care type.</p>
+              
+              <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4 mb-6 flex items-start gap-3">
+                 <Brain className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+                 <div>
+                    <h4 className="text-xs font-bold text-blue-300 uppercase tracking-wider mb-1">AI Matchmaking Enabled</h4>
+                    <p className="text-[10px] text-blue-200/70">Our engine uses your senior's profile, language preference, and personality traits to automatically match with the perfect companion.</p>
+                 </div>
+              </div>
               
               <div className="space-y-4 mb-6">
                  <div>
@@ -269,11 +296,22 @@ export default function FamilyDashboard() {
                 </div>
                 {/* Live Tracking map mock if active */}
                 {['en_route', 'arrived', 'in_progress'].includes(visit.status) && (
-                  <div className="mt-4 h-32 bg-slate-950 rounded-2xl border border-slate-800 relative overflow-hidden flex items-center justify-center">
-                    <div className="absolute inset-0 opacity-30 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:20px_20px]"></div>
-                    <div className="z-10 flex items-center gap-3 bg-slate-800/80 p-3 rounded-xl border border-slate-700 backdrop-blur-sm">
-                       <MapPin className="text-blue-400 animate-bounce" />
-                       <span className="text-xs font-mono text-slate-300">Live GPS Active: Companion is {visit.status.replace('_', ' ')}</span>
+                  <div className="mt-4 h-48 bg-slate-950 rounded-2xl border border-slate-800 relative overflow-hidden flex items-center justify-center">
+                    {/* Simulated Map Background */}
+                    <div className="absolute inset-0 bg-[#0f172a] opacity-50">
+                       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:2rem_2rem]"></div>
+                       {/* Mock Route Line */}
+                       <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                          <path d="M 50,150 Q 150,50 350,100 T 600,80" fill="none" stroke="#3b82f6" strokeWidth="4" strokeDasharray="8 4" className="animate-pulse" />
+                       </svg>
+                    </div>
+                    
+                    <div className="z-10 flex flex-col items-center gap-3 bg-slate-800/90 p-4 rounded-xl border border-slate-700 backdrop-blur-md shadow-xl w-3/4 text-center">
+                       <MapPin className="text-blue-400 w-8 h-8 animate-bounce mb-1" />
+                       <div className="flex flex-col">
+                         <span className="text-xs font-bold text-white uppercase tracking-widest">Live GPS Routing active</span>
+                         <span className="text-[10px] text-slate-400 font-mono mt-1">Companion is en route • ETA: 12 mins (1.4 mi)</span>
+                       </div>
                     </div>
                   </div>
                 )}
@@ -281,6 +319,37 @@ export default function FamilyDashboard() {
             ) : (
                <p className="text-slate-500 text-sm">No upcoming visits found.</p>
             )}
+          </section>
+
+          <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 overflow-hidden">
+             <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-2">
+                   <div className="w-8 h-8 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400">
+                      <FileText className="w-4 h-4" />
+                   </div>
+                   <h4 className="text-sm font-bold text-white uppercase tracking-wider">Secure File Hub</h4>
+                </div>
+                <button className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-purple-400 text-[10px] font-bold uppercase tracking-widest rounded-lg transition-colors flex items-center gap-2">
+                   <Upload className="w-3 h-3" /> Upload
+                </button>
+             </div>
+             <p className="text-[11px] text-slate-400 mb-4 leading-relaxed">HIPAA-compliant document storage for medical directives, daily care plans, and emergency contacts. Shared securely with assigned companions.</p>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {uploadedFiles.map((file, i) => (
+                   <div key={i} className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex justify-between items-center group hover:border-slate-600 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-3">
+                         <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-slate-500 group-hover:text-purple-400 transition-colors" />
+                         </div>
+                         <div>
+                            <p className="text-xs font-bold text-white truncate max-w-[120px]">{file.name}</p>
+                            <p className="text-[10px] text-slate-500">{file.size} • {file.date}</p>
+                         </div>
+                      </div>
+                      <button className="text-purple-500 text-[10px] uppercase font-bold tracking-wider hover:text-purple-400">View</button>
+                   </div>
+                ))}
+             </div>
           </section>
 
           <section className="bg-slate-900/40 border border-slate-800/60 rounded-3xl p-6 overflow-hidden">
@@ -375,6 +444,88 @@ export default function FamilyDashboard() {
            </section>
         </div>
       </div>
+      {/* Real-time Chat Floating Widget */}
+      {showChat && (
+        <div className="fixed bottom-24 right-6 w-80 bg-slate-900 border border-slate-700 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-50 flex flex-col overflow-hidden">
+          <div className="bg-blue-600 p-4 flex justify-between items-center">
+             <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white border border-white/30">
+                  {chatType === 'companion' ? <User className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5" />}
+                </div>
+                <div>
+                   <p className="text-white font-bold text-sm leading-tight">{chatType === 'companion' ? 'Companion Chat' : 'Support Team'}</p>
+                   <p className="text-blue-100/80 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1 mt-0.5"><div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div> Online</p>
+                </div>
+             </div>
+             <button onClick={() => setShowChat(false)} className="text-blue-200 hover:text-white transition-colors p-1"><X className="w-5 h-5" /></button>
+          </div>
+
+          <div className="flex bg-slate-800 border-b border-slate-700">
+             <button 
+                onClick={() => setChatType('companion')}
+                className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors ${chatType === 'companion' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+             >
+                Companion
+             </button>
+             <button 
+                onClick={() => setChatType('support')}
+                className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors ${chatType === 'support' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+             >
+                Support
+             </button>
+          </div>
+
+          <div className="p-4 h-64 overflow-y-auto space-y-4 bg-slate-950 flex flex-col">
+             <div className="text-center">
+                <span className="bg-slate-900 text-slate-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Today</span>
+             </div>
+             {(chatType === 'companion' ? companionMessages : supportMessages).map(m => (
+                <div key={m.id} className={`max-w-[85%] p-3 text-xs ${m.sender === 'family' ? 'bg-blue-600 text-white self-end rounded-2xl rounded-br-sm' : 'bg-slate-800 border border-slate-700 text-slate-300 self-start rounded-2xl rounded-bl-sm'}`}>
+                   <p className="leading-relaxed">{m.text}</p>
+                   <p className={`text-[8px] mt-1.5 font-bold tracking-wider ${m.sender === 'family' ? 'text-blue-200/70 text-right' : 'text-slate-500 text-left'}`}>{m.time}</p>
+                </div>
+             ))}
+          </div>
+          <div className="p-3 bg-slate-900 border-t border-slate-800">
+             <div className="relative">
+                <input 
+                  type="text" 
+                  value={newMessage} 
+                  onChange={e => setNewMessage(e.target.value)} 
+                  onKeyDown={(e) => { 
+                    if(e.key === 'Enter' && newMessage) { 
+                      const msg = {id: Date.now(), sender:'family', text: newMessage, time: 'Just now'};
+                      if (chatType === 'companion') setCompanionMessages([...companionMessages, msg]);
+                      else setSupportMessages([...supportMessages, msg]);
+                      setNewMessage(''); 
+                    } 
+                  }} 
+                  placeholder={`Message ${chatType}...`} 
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-4 pr-10 py-3 text-white text-xs outline-none focus:border-blue-500 shadow-inner" 
+                />
+                <button onClick={() => {
+                   if(newMessage) {
+                    const msg = {id: Date.now(), sender:'family', text: newMessage, time: 'Just now'};
+                    if (chatType === 'companion') setCompanionMessages([...companionMessages, msg]);
+                    else setSupportMessages([...supportMessages, msg]);
+                    setNewMessage('');
+                   }
+                }} className="absolute right-2 top-2 w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white hover:bg-blue-500 transition-colors">
+                  <svg className="w-4 h-4 translate-x-[-1px] translate-y-[1px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Floating Chat Button */}
+      {!showChat && (
+        <button onClick={() => setShowChat(true)} className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-500 rounded-full shadow-[0_10px_25px_rgba(37,99,235,0.5)] flex items-center justify-center text-white transition-all hover:scale-105 z-40 border border-blue-400/30">
+           <MessageSquare className="w-6 h-6" />
+           <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center border-2 border-slate-900">1</span>
+        </button>
+      )}
+
     </div>
   );
 }

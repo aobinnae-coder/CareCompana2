@@ -4,7 +4,7 @@ import { ShieldCheck, Award, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 const QUIZ_QUESTIONS = [
   {
-    q: "What is the primary role of a CareCompana companion?",
+    q: "What is the primary role of a CompanaConnect companion?",
     options: ["A) Prescribe medication workflows", "B) Provide non-medical social companionship and safe assistance", "C) Modify client treatment plans", "D) Transport clients to emergency rooms"],
     answer: 1 // B
   },
@@ -24,7 +24,7 @@ const QUIZ_QUESTIONS = [
     answer: 2 // C
   },
   {
-    q: "As a CareCompana companion, you are a mandatory reporter under state law. This means:",
+    q: "As a CompanaConnect companion, you are a mandatory reporter under state law. This means:",
     options: ["A) You only report if the family asks you to", "B) You must immediately report any reasonable suspicion of abuse, neglect, or exploitation to Adult Protective Services (APS)", "C) You report issues at the end of the month", "D) You are not required to report"],
     answer: 1 // B
   },
@@ -50,7 +50,7 @@ const QUIZ_QUESTIONS = [
   },
   {
     q: "If you find yourself experiencing compassion fatigue or burnout, the professional course of action is to:",
-    options: ["A) Cancel all your visits without notice", "B) Reach out to the CareCompana office for support to ensure safety and well-being for all", "C) Vent your frustrations to the clients", "D) Stop interacting during visits"],
+    options: ["A) Cancel all your visits without notice", "B) Reach out to the CompanaConnect office for support to ensure safety and well-being for all", "C) Vent your frustrations to the clients", "D) Stop interacting during visits"],
     answer: 1 // B
   }
 ];
@@ -96,7 +96,7 @@ export default function CompanionCertification() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ score: correct, passed: isPass, signature: "Signed Electronically" })
-    });
+    }).catch(err => console.log(err.message));
 
     setStep(3);
   };
@@ -114,7 +114,7 @@ export default function CompanionCertification() {
           <div className="space-y-4">
             <ConsentBox 
               title="Terms of Service & Platform Rules"
-              desc="I acknowledge CareCompana is a technology platform connecting independent contractors with clients. I will not provide medical services."
+              desc="I acknowledge CompanaConnect is a technology platform connecting independent contractors with clients. I will not provide medical services."
               checked={legalConsents.TOS}
               onChange={(c) => setLegalConsents(p => ({...p, TOS: c}))}
             />
@@ -132,7 +132,7 @@ export default function CompanionCertification() {
             />
             <ConsentBox 
               title="FCRA Background Check Consent"
-              desc="I authorize CareCompana to pull my county, state, and national criminal records via Checkr."
+              desc="I authorize CompanaConnect to pull my county, state, and national criminal records via Checkr."
               checked={legalConsents.BACKGROUND}
               onChange={(c) => setLegalConsents(p => ({...p, BACKGROUND: c}))}
             />
@@ -172,7 +172,7 @@ export default function CompanionCertification() {
                ⚠ Mandatory Reporting
              </h3>
              <p className="text-sm text-slate-300 leading-relaxed mb-3">
-               If you suspect <strong>elder abuse, neglect, or financial exploitation</strong>, you are legally obligated to report it to Adult Protective Services (APS) and CareCompana immediately. You are protected from retaliation.
+               If you suspect <strong>elder abuse, neglect, or financial exploitation</strong>, you are legally obligated to report it to Adult Protective Services (APS) and CompanaConnect immediately. You are protected from retaliation.
              </p>
           </div>
 
@@ -186,7 +186,7 @@ export default function CompanionCertification() {
           <div className="border border-slate-800 rounded-2xl p-5 bg-slate-900">
              <h3 className="text-emerald-400 font-bold mb-2 uppercase tracking-wide text-xs">Module 4: Burnout Prevention</h3>
              <p className="text-sm text-slate-400 leading-relaxed">
-               Emotional labor is real. If you experience compassion fatigue, reach out to the CareCompana office. Asking for help is professional and ensures safety for all.
+               Emotional labor is real. If you experience compassion fatigue, reach out to the CompanaConnect office. Asking for help is professional and ensures safety for all.
              </p>
           </div>
         </div>
@@ -248,7 +248,7 @@ export default function CompanionCertification() {
           <p className="text-slate-400 text-sm mb-8 leading-relaxed">Score: {score}/{QUIZ_QUESTIONS.length}</p>
           
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full text-left mb-8">
-            <h3 className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-2">CareCompana Certified</h3>
+            <h3 className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-2">CompanaConnect Certified</h3>
             <p className="text-white text-sm font-medium">Maria Gonzalez</p>
             <p className="text-[10px] text-slate-500 font-mono mt-2">CERT ID: CC-2025-000001</p>
             <p className="text-[10px] text-slate-500 font-mono">Valid Through: 12/2026</p>

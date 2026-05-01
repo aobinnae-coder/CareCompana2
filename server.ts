@@ -243,7 +243,7 @@ async function startServer() {
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (apiKey) {
         const anthropic = new Anthropic({ apiKey });
-        const systemPrompt = `You are an AI assistant for CareCompana, an elderly companionship platform.
+        const systemPrompt = `You are an AI assistant for CompanaConnect, an elderly companionship platform.
 Your task is to write a compassionate, brief, and professional visit summary for the family based on the companion's raw logs. Ensure the tone is reassuring.`;
         
         const contentStr = visit.logs.map(l => `[${l.type.toUpperCase()}] ${l.content}`).join('\\n');
@@ -480,7 +480,7 @@ Your task is to write a compassionate, brief, and professional visit summary for
          payment_method_types: ['card'],
          line_items: [
             {
-               price_data: { currency: 'usd', product_data: { name: `CareCompana Visit (${hours} hrs${specialized ? ' - Tier 2 Premium/Specialized Care' : ' - Standard Care'})` }, unit_amount: total },
+               price_data: { currency: 'usd', product_data: { name: `CompanaConnect Visit (${hours} hrs${specialized ? ' - Tier 2 Premium/Specialized Care' : ' - Standard Care'})` }, unit_amount: total },
                quantity: 1,
             },
             {
