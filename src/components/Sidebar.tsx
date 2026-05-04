@@ -1,47 +1,69 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { ShieldAlert, HeartPulse, UserCircle2, KeyRound } from 'lucide-react';
+import { ShieldAlert, HeartPulse, UserCircle2, KeyRound, LayoutGrid, Terminal } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export function Sidebar() {
   const routes = [
-    { name: 'Admin (Trust & Safety)', path: '/', icon: ShieldAlert },
-    { name: 'Family Dashboard', path: '/family', icon: HeartPulse },
-    { name: 'Companion Portal', path: '/companion', icon: UserCircle2 },
-    { name: 'Auth / Registration', path: '/auth', icon: KeyRound },
+    { name: 'Control Unit', path: '/', icon: LayoutGrid, sub: 'Admin' },
+    { name: 'Family Hub', path: '/family', icon: HeartPulse, sub: 'Safety' },
+    { name: 'Companion', path: '/companion', icon: UserCircle2, sub: 'Portal' },
+    { name: 'Security', path: '/auth', icon: KeyRound, sub: 'Access' },
   ];
 
   return (
-    <aside className="w-64 flex flex-col gap-8 shrink-0">
-      <div className="flex items-center gap-3 px-2">
-        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-          <div className="w-5 h-5 border-2 border-white rounded-full"></div>
+    <aside className="w-72 border-r border-slate-800 bg-slate-900/50 flex flex-col h-screen shrink-0">
+      <div className="p-8">
+        <div className="flex items-center gap-3 mb-12">
+          <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
+            <Terminal className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold tracking-tight text-white leading-tight font-display uppercase tracking-widest">Compana</h1>
+            <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black">Connect v2.0</p>
+          </div>
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-white">CompanaConnect</h1>
+
+        <nav className="space-y-2">
+          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-4 px-4">Primary Interface</p>
+          {routes.map((route) => (
+            <NavLink
+              key={route.path}
+              to={route.path}
+              className={({ isActive }) =>
+                cn(
+                  "group relative px-4 py-3.5 transition-all flex items-center gap-4 rounded-2xl overflow-hidden",
+                  isActive 
+                    ? "bg-slate-800 text-white shadow-sm border border-slate-700" 
+                    : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/40"
+                )
+              }
+            >
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                "bg-slate-900 border border-slate-800 group-hover:border-slate-700"
+              )}>
+                <route.icon className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold leading-none mb-1">{route.name}</span>
+                <span className="text-[9px] uppercase tracking-wider text-slate-600 font-bold">{route.sub}</span>
+              </div>
+            </NavLink>
+          ))}
+        </nav>
       </div>
 
-      <nav className="flex flex-col gap-1">
-        {routes.map((route) => (
-          <NavLink
-            key={route.path}
-            to={route.path}
-            className={({ isActive }) =>
-              cn(
-                "px-4 py-3 transition-colors flex items-center gap-3 text-sm",
-                isActive ? "bg-slate-800/50 text-white rounded-lg font-medium" : "text-slate-500 hover:text-slate-300 font-medium"
-              )
-            }
-          >
-            <route.icon className="w-5 h-5" />
-            {route.name}
-          </NavLink>
-        ))}
-      </nav>
-
-      <div className="mt-auto p-4 bg-blue-600/10 border border-blue-500/20 rounded-2xl">
-        <p className="text-[11px] uppercase tracking-widest text-blue-400 font-bold mb-2">System Demo</p>
-        <p className="text-xs text-slate-400 mb-3">Multiview Navigation Enabled.</p>
-        <button className="w-full py-2 bg-blue-600 text-white text-xs font-bold rounded-lg">Support Concierge</button>
+      <div className="mt-auto p-8 pt-0">
+        <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-3xl rounded-full -mr-12 -mt-12"></div>
+          <p className="text-[10px] uppercase tracking-widest text-primary font-bold mb-2">Protocol Status</p>
+          <div className="flex items-center gap-2 mb-4">
+             <div className="w-1.5 h-1.5 rounded-full bg-success"></div>
+             <p className="text-[11px] text-slate-300 font-medium">Core Link Verified</p>
+          </div>
+          <button className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold rounded-xl uppercase tracking-widest border border-slate-700 transition-all">Support Console</button>
+        </div>
       </div>
     </aside>
   );
