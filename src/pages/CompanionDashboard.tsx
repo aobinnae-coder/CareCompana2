@@ -1,9 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { ToggleLeft, ToggleRight, User, Settings, Filter, Shield, Activity, Calendar, MessageSquare, ChevronRight, MapPin, Star, Laptop, Heart, Globe, BookOpen, AlertCircle, CheckCircle2, Clock, Send, Info, TrendingDown, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { LineChart, Line, YAxis } from 'recharts';
+import { LineChart, Line, YAxis, Tooltip } from 'recharts';
 import { useStore } from '../lib/store';
 import { cn } from '../lib/utils';
+
+function CustomTooltip({ active, payload }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-950 border border-slate-800 p-2 rounded-lg shadow-2xl">
+        <p className="text-[10px] font-mono font-bold text-success uppercase tracking-widest">Risk Level: {payload[0].value}</p>
+        <p className="text-[8px] text-slate-500 uppercase font-medium mt-0.5">Verified Protocol Purity</p>
+      </div>
+    );
+  }
+  return null;
+}
 
 function ComplianceIndicator({ label, status, variant = 'success' }: any) {
   const colors: Record<string, string> = {
@@ -165,6 +177,7 @@ export default function CompanionDashboard() {
 
   // Profile Edit State
   const [isEditing, setIsEditing] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [profileData, setProfileData] = useState({
     bio: 'Dedicated professional caregiver with a focus on cognitive support and empathetic companionship. Standardized protocol adherence certified.',
     skills: ['Dementia Care', 'Medication Management', 'Mobility Assistance'],
@@ -222,6 +235,13 @@ export default function CompanionDashboard() {
 
   const availableJobs = jobs
     .filter(j => j.status === 'pending')
+    .filter(j => {
+      // Filter out jobs that overlap with blocked dates
+      if (j.date) {
+        return !blockedDates.includes(j.date);
+      }
+      return true;
+    })
     .filter(j => filterPriority ? j.priority : true)
     .sort((a, b) => (b.aiMatchScore || 0) - (a.aiMatchScore || 0));
 
@@ -569,6 +589,11 @@ export default function CompanionDashboard() {
                         <div className="h-16 w-full flex items-end">
                            <LineChart width={240} height={64} data={riskHistory}>
                               <YAxis hide domain={[0, 'auto']} />
+                              <Tooltip 
+                                content={<CustomTooltip />} 
+                                cursor={{ stroke: '#22c55e', strokeWidth: 1, strokeDasharray: '3 3' }}
+                                position={{ y: -40 }}
+                              />
                               <Line 
                                 type="monotone" 
                                 dataKey="score" 
@@ -588,25 +613,73 @@ export default function CompanionDashboard() {
         )}
 
         {activeTab === 'profile' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-3xl mx-auto w-full">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+            className="max-w-4xl mx-auto w-full"
+          >
              <div className="glass-card p-8">
                 <div className="flex items-center justify-between mb-8">
-                   <h2 className="text-lg font-display font-bold text-white uppercase tracking-widest">Protocol Metadata</h2>
-                   <button 
-                     onClick={() => {
-                       if (isEditing) {
-                         if (window.confirm("Confirm identity data update?")) {
-                           setIsEditing(false);
-                         }
-                       } else {
-                         setIsEditing(true);
-                       }
-                     }}
-                     className={cn("px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all", isEditing ? "bg-success text-white" : "border border-slate-800 text-slate-400 hover:text-white")}
-                   >
-                      {isEditing ? 'Commit Changes' : 'Modify Identity'}
-                   </button>
+                   <h2 className="text-lg font-display font-bold text-white uppercase tracking-widest">Identity & Gear</h2>
+                   <div className="flex gap-4">
+                      {isEditing ? (
+                        <>
+                          <button 
+                            onClick={() => setIsEditing(false)}
+                            className="px-6 py-2 border border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-widest rounded-xl hover:text-white transition-all"
+                          >
+                             Discard
+                          </button>
+                          <button 
+                            onClick={() => setShowSaveConfirm(true)}
+                            className="px-6 py-2 bg-primary text-white text-[10px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-primary/25 hover:scale-[1.02] transition-all"
+                          >
+                             Commit Changes
+                          </button>
+                        </>
+                      ) : (
+                        <button 
+                          onClick={() => setIsEditing(true)}
+                          className="px-6 py-2 bg-slate-900 border border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-widest rounded-xl hover:border-primary/50 hover:text-primary transition-all"
+                        >
+                           Edit Profile
+                        </button>
+                      )}
+                   </div>
                 </div>
+
+                <AnimatePresence>
+                   {showSaveConfirm && (
+                     <motion.div 
+                       initial={{ opacity: 0, scale: 0.95 }}
+                       animate={{ opacity: 1, scale: 1 }}
+                       exit={{ opacity: 0, scale: 0.95 }}
+                       className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md"
+                     >
+                        <div className="glass-card p-8 max-w-sm border-primary/20 ring-1 ring-primary/20">
+                           <div className="flex items-center gap-4 mb-6">
+                              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                                 <Shield className="w-6 h-6" />
+                              </div>
+                              <h3 className="text-lg font-bold text-white leading-tight">Verify Data Transmission?</h3>
+                           </div>
+                           <p className="text-xs text-slate-400 mb-8 leading-relaxed italic">Changes to your core certifications and operational bio will be synced across the secure network. This action is logged for compliance audit.</p>
+                           <div className="flex gap-4">
+                              <button onClick={() => setShowSaveConfirm(false)} className="flex-1 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-white">Cancel</button>
+                              <button 
+                                onClick={() => {
+                                  setIsEditing(false);
+                                  setShowSaveConfirm(false);
+                                  alert("Profile verified and committed to the blockchain uplink.");
+                                }}
+                                className="flex-1 py-3 bg-primary text-white text-[10px] font-bold uppercase tracking-widest rounded-xl"
+                              >
+                                Authenticate
+                              </button>
+                           </div>
+                        </div>
+                     </motion.div>
+                   )}
+                </AnimatePresence>
 
                 <div className="space-y-8">
                    <ProfileField 
