@@ -5,7 +5,7 @@ import { cn } from '../lib/utils';
 
 export function Sidebar() {
   const routes = [
-    { name: 'Control Unit', path: '/', icon: LayoutGrid, sub: 'Admin' },
+    { name: 'Control Unit', path: '/admin', icon: LayoutGrid, sub: 'Admin' },
     { name: 'Family Hub', path: '/family', icon: HeartPulse, sub: 'Safety' },
     { name: 'Companion', path: '/companion', icon: UserCircle2, sub: 'Portal' },
     { name: 'Security', path: '/auth', icon: KeyRound, sub: 'Access' },
@@ -14,7 +14,7 @@ export function Sidebar() {
   return (
     <aside className="w-72 border-r border-slate-800 bg-slate-900/50 flex flex-col h-screen shrink-0">
       <div className="p-8">
-        <div className="flex items-center gap-3 mb-12">
+        <NavLink to="/" className="flex items-center gap-3 mb-12 hover:opacity-80 transition-opacity">
           <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
             <Terminal className="w-5 h-5 text-white" />
           </div>
@@ -22,7 +22,7 @@ export function Sidebar() {
             <h1 className="text-lg font-bold tracking-tight text-white leading-tight font-display uppercase tracking-widest">Compana</h1>
             <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black">Connect v2.0</p>
           </div>
-        </div>
+        </NavLink>
 
         <nav className="space-y-2">
           <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-4 px-4">Primary Interface</p>

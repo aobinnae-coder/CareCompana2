@@ -5,31 +5,33 @@ import { useNavigate } from 'react-router-dom';
 export default function AuthPortal() {
   const navigate = useNavigate();
   const [view, setView] = useState<'selection' | 'login' | 'register'>('selection');
-  const [role, setRole] = useState<'family' | 'companion' | null>(null);
+  const [role, setRole] = useState<'family' | 'companion' | 'admin' | null>(null);
 
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, this would create an account in a database/Firebase
-    if (role === 'companion') navigate('/companion');
+    if (role === 'admin') navigate('/admin');
+    else if (role === 'companion') navigate('/companion');
     else if (role === 'family') navigate('/family');
   };
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (role === 'companion') navigate('/companion');
+    if (role === 'admin') navigate('/admin');
+    else if (role === 'companion') navigate('/companion');
     else if (role === 'family') navigate('/family');
   };
 
   if (view === 'selection') {
     return (
-      <div className="max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[80vh]">
+      <div className="max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[80vh] px-4">
         <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(37,99,235,0.3)]">
           <div className="w-8 h-8 border-4 border-white rounded-full"></div>
         </div>
-        <h1 className="text-4xl font-light text-white mb-2">Welcome to CompanaConnect</h1>
-        <p className="text-slate-400 mb-12">Select your portal to continue</p>
+        <h1 className="text-4xl font-light text-white mb-2 text-center">Welcome to CompanaConnect</h1>
+        <p className="text-slate-400 mb-12 text-center">Select your portal to continue</p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
           <button onClick={() => { setRole('family'); setView('login'); }} className="group relative overflow-hidden bg-slate-900 border border-slate-800 rounded-3xl p-8 hover:border-slate-600 transition-colors text-left flex flex-col gap-4">
              <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <HeartPulse className="w-6 h-6" />
@@ -49,6 +51,16 @@ export default function AuthPortal() {
                <p className="text-sm text-slate-400 leading-relaxed">View your schedule, submit visit notes, and complete certifications.</p>
              </div>
           </button>
+
+          <button onClick={() => { setRole('admin'); setView('login'); }} className="group relative overflow-hidden bg-slate-950 border border-primary/20 rounded-3xl p-8 hover:border-primary/50 transition-colors text-left flex flex-col gap-4">
+             <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                <ShieldCheck className="w-6 h-6" />
+             </div>
+             <div>
+               <h3 className="text-xl font-bold text-white mb-2">Command Unit</h3>
+               <p className="text-sm text-slate-400 leading-relaxed">Administrative HQ for platform oversight, security audits, and risk management.</p>
+             </div>
+          </button>
         </div>
       </div>
     );
@@ -62,12 +74,12 @@ export default function AuthPortal() {
 
       <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
         {/* Glow accent */}
-        <div className={`absolute top-0 left-0 w-full h-1 ${role === 'companion' ? 'bg-orange-500' : 'bg-purple-500'}`}></div>
+        <div className={`absolute top-0 left-0 w-full h-1 ${role === 'companion' ? 'bg-orange-500' : role === 'admin' ? 'bg-primary' : 'bg-purple-500'}`}></div>
 
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-white mb-2">{view === 'login' ? 'Sign In' : 'Create Account'}</h2>
-          <p className="text-sm text-slate-400">
-            {role === 'companion' ? 'CompanaConnect Companion Services' : 'CompanaConnect Family Access'}
+          <p className="text-sm text-slate-400 uppercase tracking-widest font-black">
+            {role === 'companion' ? 'Companion Services' : role === 'admin' ? 'System Administration' : 'Family Access'}
           </p>
         </div>
 
@@ -87,12 +99,14 @@ export default function AuthPortal() {
                 <input required type="password" placeholder="••••••••" className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500" />
               </div>
             </div>
-            <button type="submit" className={`w-full py-4 text-white font-bold rounded-xl uppercase tracking-widest text-xs transition-colors mt-2 ${role === 'companion' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-purple-600 hover:bg-purple-700'}`}>
+            <button type="submit" className={`w-full py-4 text-white font-bold rounded-xl uppercase tracking-widest text-xs transition-colors mt-2 ${role === 'companion' ? 'bg-orange-600 hover:bg-orange-700' : role === 'admin' ? 'bg-primary hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'}`}>
               Sign In
             </button>
-            <p className="text-center text-sm text-slate-400 mt-6">
-              Don't have an account? <span onClick={() => setView('register')} className="text-white hover:underline cursor-pointer font-bold">Register</span>
-            </p>
+            {role !== 'admin' && (
+              <p className="text-center text-sm text-slate-400 mt-6 font-medium">
+                Don't have an account? <span onClick={() => setView('register')} className="text-white hover:underline cursor-pointer font-bold">Register</span>
+              </p>
+            )}
           </form>
         ) : (
           <form onSubmit={handleRegisterSubmit} className="space-y-4">

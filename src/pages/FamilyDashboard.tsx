@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, Activity, Heart, Calendar, Plus, MessageSquare, Star, ArrowRight, Clock, FileText, ChevronRight, User, AlertTriangle, CheckCircle2, MapPin, Search, Filter } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { useStore } from '../lib/store';
 import { cn } from '../lib/utils';
 

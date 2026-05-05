@@ -5,18 +5,35 @@
 
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
+import LandingPage from './pages/LandingPage';
 import AdminDashboard from './pages/AdminDashboard';
 import FamilyDashboard from './pages/FamilyDashboard';
 import CompanionDashboard from './pages/CompanionDashboard';
 import EmergencyReport from './pages/EmergencyReport';
 import CompanionCertification from './pages/CompanionCertification';
 import AuthPortal from './pages/AuthPortal';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import { useStore } from './lib/store';
 
 export default function App() {
   const location = useLocation();
   const { currentUser } = useStore();
+
+  const isPortal = ['/admin', '/family', '/companion', '/companion/emergency-report', '/companion/certify'].some(path => 
+    location.pathname === path || location.pathname.startsWith(path + '/')
+  );
+
+  if (!isPortal && location.pathname !== '/auth') {
+    return (
+      <AnimatePresence mode="wait">
+        <Routes location={location}>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/auth" element={<AuthPortal />} />
+          <Route path="*" element={<LandingPage />} />
+        </Routes>
+      </AnimatePresence>
+    );
+  }
 
   return (
     <div className="flex bg-slate-950 min-h-screen text-slate-200 font-sans selection:bg-primary/30">
@@ -50,12 +67,12 @@ export default function App() {
               className="max-w-7xl mx-auto h-full"
             >
               <Routes location={location}>
-                <Route path="/" element={<AdminDashboard />} />
-                <Route path="/auth" element={<AuthPortal />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/family" element={<FamilyDashboard />} />
                 <Route path="/companion" element={<CompanionDashboard />} />
                 <Route path="/companion/emergency-report" element={<EmergencyReport />} />
                 <Route path="/companion/certify" element={<CompanionCertification />} />
+                <Route path="*" element={<AdminDashboard />} />
               </Routes>
             </motion.div>
           </AnimatePresence>
