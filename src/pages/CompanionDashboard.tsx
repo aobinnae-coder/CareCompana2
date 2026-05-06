@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ToggleLeft, ToggleRight, User, Settings, Filter, Shield, Activity, Calendar, MessageSquare, ChevronRight, MapPin, Star, Laptop, Heart, Globe, BookOpen, AlertCircle, CheckCircle2, Clock, Send, Info, TrendingDown, TrendingUp } from 'lucide-react';
+import { ToggleLeft, ToggleRight, User, Settings, Filter, Shield, Activity, Calendar, MessageSquare, ChevronRight, MapPin, Star, Laptop, Heart, Globe, BookOpen, AlertCircle, CheckCircle2, Clock, Send, Info, TrendingDown, TrendingUp, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LineChart, Line, YAxis, Tooltip } from 'recharts';
 import { useStore } from '../lib/store';
@@ -68,6 +68,15 @@ function ProfileField({ label, icon: Icon, value, isEditing, onChange }: any) {
 }
 
 function ProfileTagField({ label, icon: Icon, tags, isEditing, onChange, fullWidth }: any) {
+  const [newTag, setNewTag] = useState('');
+
+  const handleAdd = () => {
+    if (newTag.trim()) {
+      onChange([...tags, newTag.trim()]);
+      setNewTag('');
+    }
+  };
+
   return (
     <div className={cn("space-y-3", fullWidth ? "col-span-full" : "")}>
        <div className="flex items-center gap-2">
@@ -76,15 +85,32 @@ function ProfileTagField({ label, icon: Icon, tags, isEditing, onChange, fullWid
        </div>
        <div className="flex flex-wrap gap-2">
           {tags.map((tag: string, i: number) => (
-            <div key={i} className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full text-[10px] font-bold text-slate-400">
+            <div key={i} className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full text-[10px] font-bold text-slate-400 group/tag">
                {tag}
                {isEditing && (
-                 <button onClick={() => onChange(tags.filter((_: any, idx: any) => idx !== i))} className="text-slate-600 hover:text-danger">&times;</button>
+                 <button onClick={() => onChange(tags.filter((_: any, idx: any) => idx !== i))} className="text-slate-600 hover:text-danger flex items-center justify-center p-0.5 rounded-full hover:bg-danger/10 transition-colors">
+                   <AlertCircle className="w-3 h-3 rotate-45" />
+                 </button>
                )}
             </div>
           ))}
           {isEditing && (
-            <button className="px-3 py-1.5 rounded-full border border-dashed border-slate-700 text-slate-600 text-[10px] font-bold uppercase hover:border-primary hover:text-primary transition-all">+ Add New</button>
+            <div className="flex items-center gap-2">
+               <input 
+                 type="text"
+                 value={newTag}
+                 onChange={(e) => setNewTag(e.target.value)}
+                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAdd())}
+                 placeholder="New tag..."
+                 className="bg-slate-950 border border-slate-800 rounded-full px-3 py-1.5 text-[10px] font-bold text-white outline-none focus:border-primary w-24"
+               />
+               <button 
+                 onClick={handleAdd}
+                 className="px-3 py-1.5 rounded-full border border-dashed border-slate-700 text-slate-600 text-[10px] font-bold uppercase hover:border-primary hover:text-primary transition-all"
+               >
+                 + Add
+               </button>
+            </div>
           )}
        </div>
     </div>
@@ -285,6 +311,118 @@ export default function CompanionDashboard() {
 
   return (
     <div className="space-y-8 pb-20">
+      <AnimatePresence>
+        {selectedJob && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-xl"
+          >
+             <motion.div 
+               initial={{ opacity: 0, scale: 0.95, y: 20 }}
+               animate={{ opacity: 1, scale: 1, y: 0 }}
+               exit={{ opacity: 0, scale: 0.95, y: 20 }}
+               className="glass-card max-w-2xl w-full p-8 relative max-h-[90vh] overflow-y-auto"
+             >
+                <button 
+                  onClick={() => setSelectedJob(null)}
+                  className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors"
+                >
+                   <AlertCircle className="w-6 h-6 rotate-45" />
+                </button>
+
+                <div className="flex items-center gap-6 mb-8">
+                   <div className="w-20 h-20 bg-slate-900 border border-slate-800 rounded-3xl flex items-center justify-center">
+                      <User className="w-10 h-10 text-slate-600" />
+                   </div>
+                   <div>
+                      <h2 className="text-2xl font-bold text-white mb-1">{seniors.find(s => s.id === selectedJob.seniorId)?.name}</h2>
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs text-primary font-mono font-black uppercase tracking-widest">Match Score: {selectedJob.aiMatchScore}%</span>
+                        <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">{selectedJob.distance} miles away</span>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   <div className="space-y-6">
+                      <div>
+                         <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+                            <Shield className="w-3 h-3" /> Medical Intel
+                         </h3>
+                         <div className="space-y-4">
+                            <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
+                               <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Primary Condition</p>
+                               <p className="text-xs text-white font-medium">{seniors.find(s => s.id === selectedJob.seniorId)?.condition}</p>
+                            </div>
+                            <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
+                               <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Care Requirements</p>
+                               <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {selectedJob.reqSkills.map((s: string) => (
+                                    <span key={s} className="text-[9px] px-2 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-800 font-bold uppercase">{s}</span>
+                                  ))}
+                               </div>
+                            </div>
+                            <div className="p-4 bg-slate-900/50 rounded-2xl border border-slate-800">
+                               <p className="text-[9px] text-warning uppercase font-bold mb-1 italic">Vulnerability Memo</p>
+                               <p className="text-[10px] text-slate-400 leading-relaxed italic">"Patient exhibits sundowning patterns between 16:00 and 19:00. High requirement for redirection and calm verbal pacing. Telemetry sync required upon arrival."</p>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="space-y-6">
+                      <div>
+                         <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+                            <MapPin className="w-3 h-3" /> Deployment Logistics
+                         </h3>
+                         <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
+                            <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Site Address</p>
+                            <p className="text-xs text-white font-medium leading-relaxed">
+                               772 Oakwood Drive, Suite 402<br/>
+                               Pacific Heights, CA 94115
+                            </p>
+                         </div>
+                      </div>
+
+                      <div>
+                         <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+                            <Phone className="w-3 h-3" /> Emergency Vector
+                         </h3>
+                         <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
+                            <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Primary Guardian</p>
+                            <div className="flex items-center justify-between">
+                               <p className="text-xs text-white font-medium">David Riggs (Son)</p>
+                               <span className="text-[10px] text-primary font-mono">+1-555-0192</span>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="mt-12 flex gap-4">
+                   <button 
+                     onClick={() => setSelectedJob(null)}
+                     className="flex-1 py-4 border border-slate-800 text-slate-500 text-xs font-bold uppercase tracking-widest rounded-2xl hover:text-white transition-all"
+                   >
+                      Decline Mission
+                   </button>
+                   <button 
+                     onClick={() => {
+                       alert("Mission accepted. Routing intelligence to your persistent uplink.");
+                       setSelectedJob(null);
+                     }}
+                     className="flex-3 py-4 bg-primary text-white text-xs font-bold uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                   >
+                      Initialize Deployment ($ {selectedJob.payout}.00)
+                   </button>
+                </div>
+             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Dynamic Notification Stack */}
       <div className="fixed top-24 right-6 z-[60] flex flex-col gap-4 max-w-sm w-full">
          <AnimatePresence>
